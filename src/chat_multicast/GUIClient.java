@@ -93,7 +93,7 @@ public class GUIClient extends JFrame implements ActionListener, KeyListener {
                 Integer port = Integer.parseInt(portField.getText());
                 chatClient = new ChatClient(ip, port, this);
                 chatClient.start();
-                chatClient.send(username + " has connected !");
+                chatClient.send(username + " has joined !");
             } catch (NumberFormatException nex) {
                 JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
                 chatClient = null;
