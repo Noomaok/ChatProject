@@ -1,4 +1,4 @@
-package chat;
+package chat_multicast;
 
 import java.awt.*;
 import javax.swing.*;
@@ -13,6 +13,7 @@ public class GUIClient extends JFrame implements ActionListener {
     private JTextField ipField, portField, usernameField, chatField;
     private JTextArea textArea;
     private ChatClient chatClient = null;
+    private String username;
 
     public GUIClient() {
         this.setTitle("Chat client");
@@ -72,12 +73,13 @@ public class GUIClient extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == connectButton) {
             if (chatClient != null) {
+                chatClient.send(username + " has disconnected !");
                 chatClient.close();
             }
             textArea.setText("");
             
             String ip = ipField.getText();
-            String username = usernameField.getText();
+            username = usernameField.getText();
             if(ip.equals("") || username.equals("")) {
                 JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
                 chatClient = null;
@@ -85,10 +87,9 @@ public class GUIClient extends JFrame implements ActionListener {
             else {
                 try {
                     Integer port = Integer.parseInt(portField.getText());
-                    Socket newSocket = new Socket(ip, port);
-                    chatClient = new ChatClient(newSocket, this);
+                    chatClient = new ChatClient(ip, port, this);
                     chatClient.start();
-                    chatClient.send(username);
+                    chatClient.send(username + " has connected !");
                 } catch (NumberFormatException nex) {
                     JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
                     chatClient = null;
@@ -97,16 +98,17 @@ public class GUIClient extends JFrame implements ActionListener {
             }
         } else if (e.getSource() == quitButton) {
             if (chatClient != null) {
+                chatClient.send(username + " has disconnected !");
                 chatClient.close();
             }
             System.exit(0);
         } else if (e.getSource() == sendButton) {
             String message = chatField.getText();
             if (chatClient != null && !message.equals("")) {
-                chatClient.send(message);
+                chatClient.send(username + " : " + message);
                 chatField.setText("");
-                chatField.requestFocus();
             }
+            chatField.requestFocus();
         }
     }
 
