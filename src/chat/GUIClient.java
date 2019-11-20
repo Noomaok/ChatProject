@@ -3,33 +3,51 @@ package chat;
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
+import java.net.Socket;
 
 public class GUIClient extends JFrame implements ActionListener {
 
-    private JButton connectButton;
-    private JButton quitButton;
+    private JButton connectButton, quitButton, sendButton;
+    private JTextField ipField, portField, usernameField, chatField;
+    private JTextArea textArea;
+    private ChatClient chatClient = null;
 
     public GUIClient() {
         this.setTitle("Chat client");
         this.setSize(500, 400);
         this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
 
         JPanel connectionPanel = new JPanel();
         connectionPanel.setLayout(new GridLayout(1, 6));
         connectionPanel.add(new JLabel("Server IP : "));
-        connectionPanel.add(new JTextField("127.0.0.1"));
+        ipField = new JTextField("127.0.0.1");
+        connectionPanel.add(ipField);
         connectionPanel.add(new JLabel("Server PORT : "));
-        connectionPanel.add(new JTextField("1111"));
+        portField = new JTextField("1111");
+        connectionPanel.add(portField);
         connectionPanel.add(new JLabel("Username : "));
-        connectionPanel.add(new JTextField());
+        usernameField = new JTextField();
+        connectionPanel.add(usernameField);
         this.add(connectionPanel, BorderLayout.NORTH);
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        JTextArea textArea = new JTextArea();
+        textArea = new JTextArea();
         textArea.setEditable(false);
-        mainPanel.add(textArea);
+        mainPanel.add(textArea, BorderLayout.CENTER);
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BorderLayout());
+        inputPanel.add(new JLabel("Chat :"), BorderLayout.WEST);
+        chatField = new JTextField();
+        inputPanel.add(chatField, BorderLayout.CENTER);
+        sendButton = new JButton("Send");
+        sendButton.addActionListener(this);
+        inputPanel.add(sendButton, BorderLayout.EAST);
+        mainPanel.add(inputPanel, BorderLayout.SOUTH);
+
         this.add(mainPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
@@ -46,12 +64,49 @@ public class GUIClient extends JFrame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == connectButton) {
-            //do connect
+        if (e.getSource() == connectButton) {
+            if (chatClient != null) {
+                chatClient.close();
+            }
+            textArea.setText("");
+            
+            String ip = ipField.getText();
+            String username = usernameField.getText();
+            if(ip.equals("") || username.equals("")) {
+                JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
+                chatClient = null;
+            }
+            else {
+                try {
+                    Integer port = Integer.parseInt(portField.getText());
+                    Socket newSocket = new Socket(ip, port);
+                    chatClient = new ChatClient(newSocket, this);
+                    chatClient.start();
+                    chatClient.send(username);
+                } catch (NumberFormatException nex) {
+                    JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
+                    chatClient = null;
+                } catch (Exception ex) {
+                }
+            }
+
+        } else if (e.getSource() == quitButton) {
+            if (chatClient != null) {
+                chatClient.close();
+            }
+            System.exit(0);
+        } else if (e.getSource() == sendButton) {
+            String message = chatField.getText();
+            if (chatClient != null && !message.equals("")) {
+                chatClient.send(message);
+                chatField.setText("");
+                chatField.requestFocus();
+            }
         }
-        else if(e.getSource() == quitButton){
-            //do disconnect
-        }
+    }
+
+    public void displayMessage(String message) {
+        textArea.append(message + System.lineSeparator());
     }
 
     public static void main(String[] args) {

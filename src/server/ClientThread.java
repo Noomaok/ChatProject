@@ -22,20 +22,18 @@ public class ClientThread extends Thread {
 		try {
 			BufferedReader socIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			socOut = new PrintStream(clientSocket.getOutputStream());
-			while(username == null || username.equals("")) {
-				send("Enter username :");
-				username = socIn.readLine();
-			}
+			username = socIn.readLine();
+			Sender.getInstance().sendHistory(this);
 			Sender.getInstance().addClient(this);
-			Sender.getInstance().sendAll(username + " has joined");
+			Sender.getInstance().sendToAll(username + " has joined");
 			while (true) {
 				String line = socIn.readLine();
 				if (line == null) {
 					Sender.getInstance().removeClient(this);
-					Sender.getInstance().sendAll(username + " has disconnected");
+					Sender.getInstance().sendToAll(username + " has disconnected");
 					break;
 				}
-				Sender.getInstance().sendAll(username + " : " + line);
+				Sender.getInstance().sendToAll(username + " : " + line);
 			}
 			clientSocket.close();
 			socIn.close();

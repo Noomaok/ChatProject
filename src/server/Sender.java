@@ -1,19 +1,22 @@
 package server;
 
+import java.util.LinkedList;
 import java.util.Vector;
 
 public class Sender {
 
     private static Sender instance = null;
-    private static Vector<ClientThread> allClient = null;
+    private Vector<ClientThread> allClient;
+    private LinkedList<String> history;
 
     private Sender() {
+        this.allClient = new Vector<>();
+        this.history = new LinkedList<>();
     }
 
     public static Sender getInstance() {
         if (instance == null) {
             instance = new Sender();
-            allClient = new Vector<>();
         }
         return instance;
     }
@@ -26,8 +29,15 @@ public class Sender {
         allClient.remove(ct);
     }
 
-    public void sendAll(String message) {
+    public void sendToAll(String message) {
+        history.add(message);
         for (ClientThread ct : allClient) {
+            ct.send(message);
+        }
+    }
+
+    public void sendHistory(ClientThread ct) {
+        for(String message: history) {
             ct.send(message);
         }
     }

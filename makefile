@@ -1,7 +1,7 @@
-all: cc cs
+all: cs gui
 
 cs:
 	javac -d classes src/server/EchoServerMultiThreaded.java src/server/ClientThread.java src/server/Sender.java
 
-cc: 
-	javac -d classes src/chat/ChatClient.java
+gui:
+	javac -d classes src/chat/GUIClient.java src/chat/ChatClient.java

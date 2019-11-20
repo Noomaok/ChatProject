@@ -5,16 +5,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class ChatClient extends Thread {
 
     private Socket clientSocket;
     private PrintStream socOut;
     private BufferedReader socIn;
+    private GUIClient parent;
 
-    public ChatClient(Socket clientSocket) throws IOException {
+    public ChatClient(Socket clientSocket, GUIClient parent) throws IOException {
         this.clientSocket = clientSocket;
+        this.parent = parent;
         this.socIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         this.socOut = new PrintStream(clientSocket.getOutputStream());
     }
@@ -24,14 +25,14 @@ public class ChatClient extends Thread {
             String line;
             while (true) {
                 line = socIn.readLine();
-                if(line == null) {
-                    System.out.println("Server disconnected !");
-                    System.exit(1);
+                if (line == null) {
+                    parent.displayMessage("Server disconnected !");
+                    break;
                 }
-                System.out.println(line);
+                parent.displayMessage(line);
             }
         } catch (IOException e) {
-            //System.err.println("Error in client run");
+            // System.err.println("Error in client run");
         }
     }
 
@@ -39,40 +40,12 @@ public class ChatClient extends Thread {
         socOut.println(message);
     }
 
-    public void close() throws IOException {
-        this.socOut.close();
-        this.socIn.close();
-        this.clientSocket.close();
-    }
-
-    // MAIN
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Usage: java EchoClient <EchoServer host> <EchoServer port>");
-            System.exit(1);
-        }
-
+    public void close(){
         try {
-            // creation socket ==> connexion
-            ChatClient cc = new ChatClient(new Socket(args[0], Integer.parseInt(args[1])));
-            cc.start();
-            String line;
-            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-            while (true) {
-                // do read input from client
-                line = stdIn.readLine();
-                if (line.equals("/quit")) break;
-                cc.send(line);
-            }
-            cc.close();
-            stdIn.close();
-        } catch (UnknownHostException e) {
-            System.err.println("Don't know about host:" + args[0]);
-            System.exit(1);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Couldn't get I/O for " + "the connection to:" + args[0]);
-            System.exit(1);
+            this.socOut.close();
+            this.socIn.close();
+            this.clientSocket.close();
+        } catch (Exception e) {
         }
     }
 }
