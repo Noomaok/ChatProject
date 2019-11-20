@@ -7,7 +7,7 @@ import javax.swing.text.DefaultCaret;
 import java.awt.event.*;
 import java.net.Socket;
 
-public class GUIClient extends JFrame implements ActionListener {
+public class GUIClient extends JFrame implements ActionListener, KeyListener {
 
     private JButton connectButton, quitButton, sendButton;
     private JTextField ipField, portField, usernameField, chatField;
@@ -31,6 +31,7 @@ public class GUIClient extends JFrame implements ActionListener {
         connectionPanel.add(portField);
         connectionPanel.add(new JLabel("Username : "));
         usernameField = new JTextField();
+        usernameField.addKeyListener(this);
         connectionPanel.add(usernameField);
         this.add(connectionPanel, BorderLayout.NORTH);
 
@@ -48,6 +49,7 @@ public class GUIClient extends JFrame implements ActionListener {
         inputPanel.setLayout(new BorderLayout());
         inputPanel.add(new JLabel("Chat :"), BorderLayout.WEST);
         chatField = new JTextField();
+        chatField.addKeyListener(this);
         inputPanel.add(chatField, BorderLayout.CENTER);
         sendButton = new JButton("Send");
         sendButton.addActionListener(this);
@@ -69,50 +71,75 @@ public class GUIClient extends JFrame implements ActionListener {
         this.setVisible(true);
     }
 
+    public void displayMessage(String message) {
+        textArea.append(message + System.lineSeparator());
+    }
+
+    public void connect() {
+        if (chatClient != null) {
+            chatClient.close();
+        }
+        textArea.setText("");
+        
+        String ip = ipField.getText();
+        String username = usernameField.getText();
+        if(ip.equals("") || username.equals("")) {
+            JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
+            chatClient = null;
+        }
+        else {
+            try {
+                Integer port = Integer.parseInt(portField.getText());
+                Socket newSocket = new Socket(ip, port);
+                chatClient = new ChatClient(newSocket, this);
+                chatClient.start();
+                chatClient.send(username);
+            } catch (NumberFormatException nex) {
+                JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
+                chatClient = null;
+            } catch (Exception ex) {
+            }
+        }
+    }
+
+    public void send() {
+        String message = chatField.getText();
+        if (chatClient != null && !message.equals("")) {
+            chatClient.send(message);
+            chatField.setText("");
+            chatField.requestFocus();
+        }
+    }
+
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == connectButton) {
-            if (chatClient != null) {
-                chatClient.close();
-            }
-            textArea.setText("");
-            
-            String ip = ipField.getText();
-            String username = usernameField.getText();
-            if(ip.equals("") || username.equals("")) {
-                JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
-                chatClient = null;
-            }
-            else {
-                try {
-                    Integer port = Integer.parseInt(portField.getText());
-                    Socket newSocket = new Socket(ip, port);
-                    chatClient = new ChatClient(newSocket, this);
-                    chatClient.start();
-                    chatClient.send(username);
-                } catch (NumberFormatException nex) {
-                    JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
-                    chatClient = null;
-                } catch (Exception ex) {
-                }
-            }
+            connect();
         } else if (e.getSource() == quitButton) {
             if (chatClient != null) {
                 chatClient.close();
             }
             System.exit(0);
         } else if (e.getSource() == sendButton) {
-            String message = chatField.getText();
-            if (chatClient != null && !message.equals("")) {
-                chatClient.send(message);
-                chatField.setText("");
-                chatField.requestFocus();
+            send();
+        }
+    }
+
+    public void keyPressed(KeyEvent evt){
+        if(evt.getSource() == usernameField) {
+            if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                connect();
+            }
+        } 
+        else if(evt.getSource() == chatField) {
+            if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                send();
             }
         }
     }
 
-    public void displayMessage(String message) {
-        textArea.append(message + System.lineSeparator());
-    }
+    public void keyReleased(KeyEvent evt){} 
+
+    public void keyTyped(KeyEvent evt) {}
 
     public static void main(String[] args) {
         GUIClient guiClient = new GUIClient();

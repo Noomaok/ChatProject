@@ -5,9 +5,8 @@ import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 
 import java.awt.event.*;
-import java.net.Socket;
 
-public class GUIClient extends JFrame implements ActionListener {
+public class GUIClient extends JFrame implements ActionListener, KeyListener {
 
     private JButton connectButton, quitButton, sendButton;
     private JTextField ipField, portField, usernameField, chatField;
@@ -25,13 +24,14 @@ public class GUIClient extends JFrame implements ActionListener {
         JPanel connectionPanel = new JPanel();
         connectionPanel.setLayout(new GridLayout(1, 6));
         connectionPanel.add(new JLabel("Server IP : "));
-        ipField = new JTextField("127.0.0.1");
+        ipField = new JTextField("230.0.0.0");
         connectionPanel.add(ipField);
         connectionPanel.add(new JLabel("Server PORT : "));
         portField = new JTextField("1111");
         connectionPanel.add(portField);
         connectionPanel.add(new JLabel("Username : "));
         usernameField = new JTextField();
+        usernameField.addKeyListener(this);
         connectionPanel.add(usernameField);
         this.add(connectionPanel, BorderLayout.NORTH);
 
@@ -49,6 +49,7 @@ public class GUIClient extends JFrame implements ActionListener {
         inputPanel.setLayout(new BorderLayout());
         inputPanel.add(new JLabel("Chat :"), BorderLayout.WEST);
         chatField = new JTextField();
+        chatField.addKeyListener(this);
         inputPanel.add(chatField, BorderLayout.CENTER);
         sendButton = new JButton("Send");
         sendButton.addActionListener(this);
@@ -70,32 +71,49 @@ public class GUIClient extends JFrame implements ActionListener {
         this.setVisible(true);
     }
 
+    public void displayMessage(String message) {
+        textArea.append(message + System.lineSeparator());
+    }
+
+    public void connect() {
+        if (chatClient != null) {
+            chatClient.send(username + " has disconnected !");
+            chatClient.close();
+        }
+        textArea.setText("");
+        
+        String ip = ipField.getText();
+        username = usernameField.getText();
+        if(ip.equals("") || username.equals("")) {
+            JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
+            chatClient = null;
+        }
+        else {
+            try {
+                Integer port = Integer.parseInt(portField.getText());
+                chatClient = new ChatClient(ip, port, this);
+                chatClient.start();
+                chatClient.send(username + " has connected !");
+            } catch (NumberFormatException nex) {
+                JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
+                chatClient = null;
+            } catch (Exception ex) {
+            }
+        }
+    }
+
+    public void send() {
+        String message = chatField.getText();
+            if (chatClient != null && !message.equals("")) {
+                chatClient.send(username + " : " + message);
+                chatField.setText("");
+            }
+            chatField.requestFocus();
+    }
+
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == connectButton) {
-            if (chatClient != null) {
-                chatClient.send(username + " has disconnected !");
-                chatClient.close();
-            }
-            textArea.setText("");
-            
-            String ip = ipField.getText();
-            username = usernameField.getText();
-            if(ip.equals("") || username.equals("")) {
-                JOptionPane.showMessageDialog(this, "IP and Username must be set", "Input error", JOptionPane.ERROR_MESSAGE);
-                chatClient = null;
-            }
-            else {
-                try {
-                    Integer port = Integer.parseInt(portField.getText());
-                    chatClient = new ChatClient(ip, port, this);
-                    chatClient.start();
-                    chatClient.send(username + " has connected !");
-                } catch (NumberFormatException nex) {
-                    JOptionPane.showMessageDialog(this, "Port value must be a number", "Input error", JOptionPane.ERROR_MESSAGE);
-                    chatClient = null;
-                } catch (Exception ex) {
-                }
-            }
+            connect();
         } else if (e.getSource() == quitButton) {
             if (chatClient != null) {
                 chatClient.send(username + " has disconnected !");
@@ -103,18 +121,26 @@ public class GUIClient extends JFrame implements ActionListener {
             }
             System.exit(0);
         } else if (e.getSource() == sendButton) {
-            String message = chatField.getText();
-            if (chatClient != null && !message.equals("")) {
-                chatClient.send(username + " : " + message);
-                chatField.setText("");
-            }
-            chatField.requestFocus();
+            send();
         }
     }
 
-    public void displayMessage(String message) {
-        textArea.append(message + System.lineSeparator());
+    public void keyPressed(KeyEvent evt){
+        if(evt.getSource() == usernameField) {
+            if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                connect();
+            }
+        } 
+        else if(evt.getSource() == chatField) {
+            if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                send();
+            }
+        }
     }
+
+    public void keyReleased(KeyEvent evt){} 
+
+    public void keyTyped(KeyEvent evt) {}
 
     public static void main(String[] args) {
         GUIClient guiClient = new GUIClient();
