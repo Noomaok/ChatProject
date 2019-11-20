@@ -37,12 +37,10 @@ public class ChatClient extends Thread {
 
     public void send(String message) {
         try {
-            DatagramSocket sendSocket = new DatagramSocket();
             byte[] buf = message.getBytes();
 
             DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-            sendSocket.send(packet);
-            sendSocket.close();
+            socket.send(packet);
         } catch(Exception e) {}
     }
 
