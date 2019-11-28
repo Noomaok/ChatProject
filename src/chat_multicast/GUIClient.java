@@ -40,6 +40,8 @@ public class GUIClient extends JFrame implements ActionListener, KeyListener {
         textArea = new JTextArea();
         textArea.setEditable(false);
         textArea.setAutoscrolls(true);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
         DefaultCaret caret = (DefaultCaret)textArea.getCaret();
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         JScrollPane scroller = new JScrollPane(textArea);
